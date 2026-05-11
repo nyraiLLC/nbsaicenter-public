@@ -1,0 +1,96 @@
+name: Docs Check
+
+# Test gate for the public-docs repo: every PR + every push to main runs:
+#  1. HTML validity check (every .html file parses).
+#  2. Internal-link check (no broken in-repo links).
+#  3. Versioned-doc invariant: every legal doc carries a `Version: vN.N` line.
+#
+# To make this a true blocking gate, enable branch protection on `main` and
+# require the "docs-check" job to pass. See repo Settings → Branches.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: docs-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs-check:
+    name: Validate HTML + links + versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: List documents
+        run: ls -la *.html
+
+      - name: Install tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y tidy
+
+      - name: HTML validity (tidy)
+        run: |
+          set -e
+          # Tidy reports warnings on inline styles etc.; we only fail on errors.
+          fail=0
+          for f in *.html; do
+            echo "--- $f ---"
+            tidy -q -e --drop-empty-elements no "$f" || ec=$?
+            if [ "${ec:-0}" -ge 2 ]; then
+              echo "::error file=$f::Tidy reported errors"
+              fail=1
+            fi
+            unset ec
+          done
+          exit "$fail"
+
+      - name: Internal-link check
+        run: |
+          set -e
+          fail=0
+          for f in *.html; do
+            # Pull every href that doesn't start with http://, https://, or mailto:
+            grep -oE 'href="[^"#:][^"]*"' "$f" \
+              | sed -E 's/href="([^"]+)"/\1/' \
+              | grep -v '^mailto:' \
+              | grep -v '^https\?://' \
+              | while read -r target; do
+                  # Strip leading ./
+                  t="${target#./}"
+                  # Strip query string + fragment
+                  t="${t%%#*}"
+                  t="${t%%\?*}"
+                  if [ -z "$t" ]; then continue; fi
+                  if [ ! -f "$t" ]; then
+                    echo "::error file=$f::Broken internal link → $target"
+                    fail=1
+                  fi
+                done
+          done
+          exit "$fail"
+
+      - name: Version-line invariant
+        run: |
+          set -e
+          fail=0
+          # Every legal doc must have a "Version: vN.N" line.
+          for f in privacy-policy.html terms-of-service.html liability-disclaimer.html minor-data-consent.html; do
+            if [ ! -f "$f" ]; then
+              echo "::error file=$f::Required legal doc missing"
+              fail=1
+              continue
+            fi
+            if ! grep -Eq 'Version:\s*v[0-9]+\.[0-9]+' "$f"; then
+              echo "::error file=$f::Missing 'Version: vN.N' line"
+              fail=1
+            fi
+          done
+          exit "$fail"
