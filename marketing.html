@@ -16,6 +16,12 @@ h2 { font-size: 22px; margin-top: 40px; color: #5a1d12; }
 a { color: #c95a1d; }
 ul { padding-left: 22px; }
 .cta { display: inline-block; padding: 12px 24px; background: #c95a1d; color: white; border-radius: 12px; text-decoration: none; font-weight: 600; }
+.cta-disabled { display: inline-block; padding: 12px 24px; background: #c0c4cc; color: white; border-radius: 12px; text-decoration: none; font-weight: 600; cursor: not-allowed; pointer-events: none; }
+@media (prefers-color-scheme: dark) {
+  body { background: #181a23; color: #e6e9f0; }
+  .feature { background: #2a1f12; }
+  .cta-disabled { background: #4a4f5a; }
+}
 </style>
 </head>
 <body>
@@ -58,7 +64,7 @@ ul { padding-left: 22px; }
 
 <h2>Coming soon</h2>
 <p style="text-align: center; margin-top: 40px;">
-  <a class="cta" href="#">Download on the App Store</a>
+  <span class="cta-disabled" aria-disabled="true">Coming to the App Store</span>
 </p>
 <p style="text-align: center; color: #616a7c; font-size: 13px;">Currently in TestFlight. Public launch pending App Store review.</p>
 
