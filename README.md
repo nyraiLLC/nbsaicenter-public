@@ -21,6 +21,6 @@ Every legal document carries a `version: vN.N` line and a `Last updated` date. T
 
 ## Operator
 
-NB SAI is operated by Satish Nagabhyrava as an independent developer. Contact: nagabs66@gmail.com.
+NB SAI is operated by NYRAI LLC. Contact: hello@nyrai.ai.
 
 > The 501(c)(3) tax-exempt status and EIN referenced in the app must be substantiated with documentation before launch. See `liability-disclaimer.html` for the current disclosure.
